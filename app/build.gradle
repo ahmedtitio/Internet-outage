@@ -15,19 +15,28 @@ android {
         versionName "1.0"
     }
 
+    // Codemagic signing: keystore passed via Gradle properties (-Pkey.store=...)
+    signingConfigs {
+        if (project.hasProperty('key.store')) {
+            codemagic {
+                storeFile file(project.property('key.store'))
+                storePassword project.property('key.store.password')
+                keyAlias project.property('key.alias')
+                keyPassword project.property('key.alias.password')
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
-            // Codemagic signing: pass keystore via Gradle properties (-Pkey.store=...)
             if (project.hasProperty('key.store')) {
-                signingConfig signingConfigs.create('codemagic') {
-                    store file(project.property('key.store'))
-                    storePassword project.property('key.store.password')
-                    keyAlias project.property('key.alias')
-                    keyPassword project.property('key.alias.password')
-                }
+                signingConfig signingConfigs.codemagic
+            } else {
+                // Fallback: sign release with the debug keystore so CI builds never fail
+                signingConfig signingConfigs.debug
             }
         }
     }

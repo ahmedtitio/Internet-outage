@@ -79,16 +79,27 @@ workflows:
         script: |
           #!/usr/bin/env bash
           set -e
-          echo "$KEYSTORE_BASE64" | base64 -d > "$CM_BUILD_DIR/release.keystore"
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "⚠️ متغير KEYSTORE_BASE64 غير معرّف — سيتم بناء Release موقع بمفتاح debug (قابل للتثبيت مباشرة)."
+            echo "للحصول على توقيع حقيقي: أنشئ مجموعة المتغيرات android-signing في Codemagic."
+            rm -f "$CM_BUILD_DIR/release.keystore"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$CM_BUILD_DIR/release.keystore"
+          ls -la "$CM_BUILD_DIR/release.keystore"
       - name: بناء Release APK موقع
         script: |
           #!/usr/bin/env bash
           set -e
-          ./gradlew clean assembleRelease --stacktrace \
-            -Pkey.store="$CM_BUILD_DIR/release.keystore" \
-            -Pkey.store.password="$KEYSTORE_PASSWORD" \
-            -Pkey.alias="$KEY_ALIAS" \
-            -Pkey.alias.password="$KEY_PASSWORD"
+          if [ -f "$CM_BUILD_DIR/release.keystore" ]; then
+            ./gradlew clean assembleRelease --stacktrace \
+              -Pkey.store="$CM_BUILD_DIR/release.keystore" \
+              -Pkey.store.password="$KEYSTORE_PASSWORD" \
+              -Pkey.alias="$KEY_ALIAS" \
+              -Pkey.alias.password="$KEY_PASSWORD"
+          else
+            ./gradlew clean assembleRelease --stacktrace
+          fi
           find . -name "*.apk" -type f
       - name: نسخ الـ APK لمجلد واضح
         script: |
