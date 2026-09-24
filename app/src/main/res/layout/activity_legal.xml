@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollLegal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_screen"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/bg_card"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="@string/settings"
+            app:titleTextColor="@color/white" />
+
+        <TextView
+            android:id="@+id/textLegalContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:lineSpacingExtra="5dp"
+            android:textColor="@color/white"
+            android:textColorLink="@color/accent"
+            android:textSize="14sp" />
+
+        <!-- مساحة إعلانية (AdMob Banner) — تُملأ لاحقاً عبر AdManager -->
+        <FrameLayout
+            android:id="@+id/adContainerLegal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="50dp" />
+    </LinearLayout>
+</ScrollView>

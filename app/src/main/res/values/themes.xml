@@ -8,4 +8,16 @@
         <item name="android:statusBarColor">@color/bg_screen</item>
         <item name="android:windowBackground">@color/bg_screen</item>
     </style>
+
+    <style name="SettingsSectionHeader" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
 </resources>

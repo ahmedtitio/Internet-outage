@@ -32,6 +32,10 @@ class DeviceDetailsActivity : AppCompatActivity() {
     private lateinit var controlManager: BandwidthControlManager
     private lateinit var commander: InternetCommander
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.example.wifiscanner.util.LocaleHelper.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDeviceDetailsBinding.inflate(layoutInflater)

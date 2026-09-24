@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WiFi Network Scanner</string>
+    <string name="scan">Scan</string>
+    <string name="settings">Settings</string>
+    <string name="sort">Sort</string>
+    <string name="scanning">Scanning…</string>
+    <string name="sort_btn_name">Name</string>
+    <string name="sort_btn_ip">IP</string>
+    <string name="sort_btn_usage">Usage</string>
+    <string name="sort_name">Sort: by name</string>
+    <string name="sort_ip">Sort: by IP</string>
+    <string name="sort_usage">Sort: by usage</string>
+    <string name="ssid">Network</string>
+    <string name="gateway">Gateway (Router)</string>
+    <string name="my_ip">My IP</string>
+    <string name="status_scanning">Scanning network…</string>
+    <string name="status_found_n">Found %1$d device(s)…</string>
+    <string name="status_done">Scan complete — %1$d devices connected</string>
+    <string name="status_not_connected">Not connected to WiFi. Enable WiFi first.</string>
+    <string name="reset_stats">Reset all statistics</string>
+    <string name="reset_device">Reset this device usage</string>
+    <string name="device_details">Device details</string>
+    <string name="connected_devices">Connected devices</string>
+    <string name="network_info">Network info</string>
+    <string name="data_usage">Data usage</string>
+    <string name="open_ports">Open ports</string>
+    <string name="bandwidth_control">Internet control</string>
+    <string name="block_device">Block internet for this device</string>
+    <string name="unblock_device">Unblock device</string>
+    <string name="throttle_limit">Throttle speed</string>
+    <string name="remove_throttle">Remove limit</string>
+    <string name="download_limit">Download limit (Kbps)</string>
+    <string name="upload_limit">Upload limit (Kbps)</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="action_log">Action log</string>
+    <string name="clear_log">Clear log</string>
+    <string name="splash_tagline">Scan your network… and control who joins it</string>
+    <string name="settings_appearance">Appearance &amp; Language</string>
+    <string name="settings_permissions">Background permissions</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_legal">Legal &amp; developer info</string>
+    <string name="language_title">App language</string>
+    <string name="language_summary">Default language follows your device language</string>
+    <string name="language_changed">Language changed</string>
+    <string name="battery_title">Run in background without battery limits</string>
+    <string name="battery_summary_on">App is exempt from battery optimization</string>
+    <string name="battery_summary_off">Tap to allow unlimited background work</string>
+    <string name="autostart_title">Auto-start in background</string>
+    <string name="autostart_summary">Open system settings and enable Auto-start for this app</string>
+    <string name="notifications_title">Notification permission</string>
+    <string name="notifications_summary_on">Notifications allowed</string>
+    <string name="notifications_summary_off">Tap to allow notifications for background network monitoring</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="terms_title">Terms of Use</string>
+    <string name="contact_us_title">Contact Us</string>
+    <string name="about_title">About</string>
+    <string name="developer_info_title">Developer &amp; app info</string>
+    <string name="disclaimer">Note: Android does not allow non-admin apps to measure other devices\' data usage precisely. This app shows estimates based on local network activity and the ARP table, and shows this device\'s usage accurately via TrafficStats.</string>
+    <string name="bandwidth_disclaimer">Important: Android does not allow regular apps to enforce real limits on other devices — this requires router privileges or root. Rules set here are managed from your router admin page (Parental Controls / Bandwidth Control / MAC Filter) or via a TM-Network-Manager compatible app (TMAC protocol, same as Fing).</string>
+    <string name="router_cmd_sent">Command sent to router: %1$s</string>
+    <string name="router_cmd_failed">Could not execute command — router may not support external control. Open router page and apply manually (MAC: %1$s).</string>
+    <string name="confirm_block">Block internet for %1$s?</string>
+    <string name="confirm_unblock">Restore internet for %1$s?</string>
+    <string name="blocked_badge">⛔ Blocked</string>
+    <string name="throttled_badge">🐢 Limited: %1$s</string>
+    <string name="no_actions">No actions logged yet</string>
+    <string name="contact_email_subject">Support for WiFi Network Scanner</string>
+    <string name="no_email_app">No email app installed</string>
+    <string name="ssid_placeholder">SSID: —</string>
+    <string name="gateway_placeholder">Gateway: —</string>
+    <string name="my_ip_placeholder">My IP: —</string>
+    <string name="rx_placeholder">RX: 0 B</string>
+    <string name="tx_placeholder">TX: 0 B</string>
+    <string name="developer_name">Developer: Ahmed Titio</string>
+    <string name="developer_email">Support email: ahmedtitio@gmail.com</string>
+    <string name="app_version_name_text">Version: 1.0 — Smart Network Toolkit</string>
+    <string name="privacy_policy_note">Privacy: This app works entirely on your device and collects/sends no personal data to external servers.</string>
+    <string name="developer_credit">Developed by Ahmed Titio</string>
+    <string name="privacy_policy_full">PRIVACY POLICY — WiFi Network Scanner
+
+Effective date: 2026-09-25
+
+1) Data collection
+This app collects no personal data and requires no account. It has no servers and sends no information to the internet.
+
+2) Displayed information
+The app shows information about your local network (device names, IP/MAC addresses, estimated data usage). All of it is read locally and stored only in the app private storage on your phone. It never leaves your device.
+
+3) Permissions and why we need them
+- WiFi / Nearby devices / Location: to scan devices connected to your network (Android requirement).
+- Usage access stats: to display data usage.
+- Ignore battery optimizations &amp; notifications: to keep scanning in background and alert you about unknown devices.
+- Internet: used only for future AdMob ads and update checks.
+
+4) Ads
+The app may show ads via Google AdMob. Google may collect advertising identifiers per its policy: https://policies.google.com/privacy
+
+5) Your rights
+You can delete all stored data anytime from Settings → Reset statistics, or by uninstalling the app.
+
+6) Children
+The app is not intended for children under 13 and does not collect their data.
+
+7) Contact
+Privacy questions: ahmedtitio@gmail.com</string>
+    <string name="terms_full">TERMS OF USE — WiFi Network Scanner
+
+1) Lawful use
+This tool is designed to help you manage YOUR OWN home network only. Misuse is prohibited, including:
+- Scanning or monitoring networks you are not authorized to administer.
+- Intercepting other people\'s data or spying.
+- Cutting off service to devices outside your authority.
+
+2) Network ownership
+By using speed-control or blocking features you declare that you are the owner or an authorized administrator of the target router and network.
+
+3) Limitation of liability
+- Scan results and usage estimates are approximate.
+- Blocking commands depend on router support; failure to execute is not an app defect.
+- The developer is not responsible for misuse of the app or any resulting damages.
+
+4) Intellectual property
+All design and software rights are reserved to Ahmed Titio © 2026. Redistributing or selling the app without written permission is prohibited.
+
+5) Changes
+Terms may be updated in new releases; continued use means acceptance.</string>
+    <string name="about_full">WiFi Network Scanner — Version 1.0
+
+Discover devices on your network, monitor their internet usage, and throttle or block them to protect your home WiFi.
+
+Developer: Ahmed Titio
+Support: ahmedtitio@gmail.com</string>
+</resources>
