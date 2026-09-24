@@ -1,39 +1,128 @@
-# Codemagic CI/CD configuration
-# https://codemagic.io  —  Connect your GitHub repository and select this workflow.
+# Codemagic CI/CD — بناء تطبيق فاحص شبكة الواي فاي (APK)
+# المرجع: نفس هيكل workflow لعبة StarJump، معدّل لهذا المشروع.
+# ملاحظة: ملفات المشروع في جذر المستودع (لا حاجة لـ cd إلى مجلد فرعي).
 workflows:
-  android-app:
-    name: Android APK (Debug)
-
-    instance_type: linux
-
-    max_build_duration: 60
-
+  wifiscanner-apk:
+    name: بناء فاحص شبكة الواي فاي - APK فقط
+    instance_type: mac_mini_m2
+    max_build_duration: 30
     environment:
-      groups:
-        - android-signing   # optional: define keystore vars in Codemagic UI for release builds
+      android-sdk:
+        api-level: 34
       vars:
-        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false"
-
+        MODULE_NAME: app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
     scripts:
-      - name: Set up local.properties
+      - name: إعداد Gradle Wrapper و local.properties
         script: |
+          #!/usr/bin/env bash
+          set -e
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-      - name: Grant execute permission for gradlew
-        script: chmod +x gradlew
-      - name: Build Debug APK
-        script: ./gradlew assembleDebug --stacktrace
-      # Uncomment to build a signed Release APK instead
-      # - name: Decode keystore
-      #   script: |
-      #     echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
-      # - name: Build Release APK
-      #   script: ./gradlew assembleRelease -Pkey.store=release.keystore -Pkey.alias="$KEY_ALIAS" -Pkey.store.password="$KEYSTORE_PASSWORD" -Pkey.alias.password="$KEY_PASSWORD" --stacktrace
+          chmod +x ./gradlew
+          ls -la gradle/wrapper/
+          ls -la gradlew
+
+      - name: بناء APK
+        script: |
+          #!/usr/bin/env bash
+          set -e
+          echo "بدء عملية البناء..."
+          ./gradlew clean assembleDebug --stacktrace
+          echo "===== ملفات الإخراج ====="
+          find . -name "*.apk" -type f
+
+      - name: نسخ الـ APK لمجلد واضح
+        script: |
+          #!/usr/bin/env bash
+          mkdir -p $CM_BUILD_DIR/build-output
+          cp app/build/outputs/apk/debug/app-debug.apk $CM_BUILD_DIR/build-output/WiFiScanner-v1.0.apk || {
+            echo "بحث عن أي apk:"
+            find $CM_BUILD_DIR -name "*.apk" -exec cp {} $CM_BUILD_DIR/build-output/WiFiScanner.apk \;
+          }
+          ls -la $CM_BUILD_DIR/build-output/
 
     artifacts:
-      - app/build/outputs/**/*.apk
+      - build-output/*.apk
+      - app/build/outputs/apk/debug/*.apk
 
-    # Optional: publish the APK directly from Codemagic
-    # publishing:
-    #   email:
-    #     recipients:
-    #       - you@example.com
+    publishing:
+      email:
+        recipients:
+          - ahmedtitio@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  # ─────────────────────────────────────────────────────────────
+  # (اختياري) بناء Release موقّع — يتطلب إضافة keystore ومجموعة
+  # متغيرات بيئة باسم android-signing في واجهة Codemagic تحتوي:
+  #   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+  # ثم شغّل هذا الـ workflow بدلاً من wifiscanner-apk
+  # ─────────────────────────────────────────────────────────────
+  wifiscanner-apk-release:
+    name: بناء فاحص شبكة الواي فاي - Release موقّع
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      android-sdk:
+        api-level: 34
+      groups:
+        - android-signing
+      vars:
+        MODULE_NAME: app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+    scripts:
+      - name: إعداد Gradle Wrapper و local.properties
+        script: |
+          #!/usr/bin/env bash
+          set -e
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          chmod +x ./gradlew
+
+      - name: فك تشفير الـ keystore
+        script: |
+          #!/usr/bin/env bash
+          set -e
+          echo "$KEYSTORE_BASE64" | base64 -d > $CM_BUILD_DIR/release.keystore
+
+      - name: بناء Release APK موقّع
+        script: |
+          #!/usr/bin/env bash
+          set -e
+          ./gradlew clean assembleRelease --stacktrace \
+            -Pkey.store=$CM_BUILD_DIR/release.keystore \
+            -Pkey.store.password="$KEYSTORE_PASSWORD" \
+            -Pkey.alias="$KEY_ALIAS" \
+            -Pkey.alias.password="$KEY_PASSWORD"
+          find . -name "*.apk" -type f
+
+      - name: نسخ الـ APK لمجلد واضح
+        script: |
+          #!/usr/bin/env bash
+          mkdir -p $CM_BUILD_DIR/build-output
+          cp app/build/outputs/apk/release/app-release.apk $CM_BUILD_DIR/build-output/WiFiScanner-v1.0-release.apk
+          ls -la $CM_BUILD_DIR/build-output/
+
+    artifacts:
+      - build-output/*.apk
+      - app/build/outputs/apk/release/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - ahmedtitio@gmail.com
+        notify:
+          success: true
+          failure: true
