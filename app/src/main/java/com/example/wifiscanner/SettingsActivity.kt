@@ -3,10 +3,11 @@ package com.example.wifiscanner
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.wifiscanner.ads.AdManager
 import com.example.wifiscanner.databinding.ActivitySettingsBinding
 import com.example.wifiscanner.util.DeviceStatsStore
 
-/** شاشة الإعدادات: إعادة ضبط إحصائيات الاستهلاك + معلومات عن التطبيق. */
+/** شاشة الإعدادات: إعادة ضبط إحصائيات الاستهلاك + معلومات عن التطبيق وبيانات المطور. */
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySettingsBinding
@@ -24,5 +25,8 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.textDisclaimer.text = getString(R.string.disclaimer)
+
+        // المساحة الإعلانية (تُتخطى تلقائياً حتى تفعيل AdMob)
+        AdManager.showBanner(this, binding.adContainerSettings)
     }
 }

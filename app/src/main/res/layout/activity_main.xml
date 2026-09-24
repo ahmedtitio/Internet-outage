@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_screen"
     android:padding="12dp">
 
     <!-- رأس معلومات الشبكة -->
@@ -35,22 +36,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/white"
-                tools:ignore="HardcodedText"
-                android:text="الشبكة: —" />
+                android:textSize="14sp"
+                android:layout_marginTop="6dp"
+                android:text="@string/ssid_placeholder" />
 
             <TextView
                 android:id="@+id/textGateway"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_secondary"
-                android:text="البوابة: —" />
+                android:textSize="13sp"
+                android:layout_marginTop="2dp"
+                android:text="@string/gateway_placeholder" />
 
             <TextView
                 android:id="@+id/textMyIp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_secondary"
-                android:text="عنواني: —" />
+                android:textSize="13sp"
+                android:layout_marginTop="2dp"
+                android:text="@string/my_ip_placeholder" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -64,7 +70,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="@color/teal_200"
-                    android:text="RX: 0 B" />
+                    android:textSize="13sp"
+                    android:text="@string/rx_placeholder" />
 
                 <TextView
                     android:id="@+id/textTx"
@@ -73,38 +80,47 @@
                     android:layout_weight="1"
                     android:gravity="end"
                     android:textColor="@color/teal_200"
-                    android:text="TX: 0 B" />
+                    android:textSize="13sp"
+                    android:text="@string/tx_placeholder" />
             </LinearLayout>
 
+            <!-- شريط الأزرار: صف أول (فحص + ترتيب) وصف ثانٍ (إعدادات) لتجنب تداخل النصوص -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="12dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnScan"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:textSize="14sp"
                     android:text="@string/scan" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSort"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:layout_marginStart="8dp"
+                    android:textSize="13sp"
+                    android:maxLines="1"
+                    android:autoSizeTextType="none"
+                    android:ellipsize="end"
                     android:text="@string/sort" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSettings"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/settings" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSettings"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="13sp"
+                android:text="@string/settings" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -115,6 +131,7 @@
         android:layout_marginTop="10dp"
         android:textColor="@color/text_secondary"
         android:textSize="13sp"
+        tools:text="جاهز للفحص"
         app:layout_constraintTop_toBottomOf="@id/cardNetwork" />
 
     <ProgressBar
@@ -126,12 +143,24 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/textStatus" />
 
+    <TextView
+        android:id="@+id/textSectionTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/connected_devices"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/progressScan" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/progressScan"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@id/textSectionTitle"
+        app:layout_constraintBottom_toTopOf="@id/adContainerMain">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerDevices"
@@ -140,5 +169,14 @@
             android:clipToPadding="false"
             android:paddingBottom="12dp" />
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- مساحة إعلانية (AdMob Banner) — تُملأ لاحقاً عبر AdManager -->
+    <FrameLayout
+        android:id="@+id/adContainerMain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:background="#11FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

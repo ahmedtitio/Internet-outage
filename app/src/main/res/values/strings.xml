@@ -4,6 +4,10 @@
     <string name="scan">بدء الفحص</string>
     <string name="settings">الإعدادات</string>
     <string name="sort">الترتيب</string>
+    <string name="scanning">جارٍ الفحص…</string>
+    <string name="sort_btn_name">اسم</string>
+    <string name="sort_btn_ip">IP</string>
+    <string name="sort_btn_usage">استهلاك</string>
     <string name="sort_name">الترتيب: حسب الاسم</string>
     <string name="sort_ip">الترتيب: حسب عنوان IP</string>
     <string name="sort_usage">الترتيب: حسب الاستهلاك</string>
@@ -43,4 +47,22 @@
     <string name="clear_log">تفريغ السجل</string>
     <string name="confirm_block">هل تريد قطع الإنترنت عن %1$s؟</string>
     <string name="confirm_unblock">هل تريد إعادة الاتصال لـ %1$s؟</string>
+
+    <!-- نصوص مواضع (Placeholders) لتجنب النصوص الصلبة في التصميم -->
+    <string name="ssid_placeholder">الشبكة: —</string>
+    <string name="gateway_placeholder">البوابة: —</string>
+    <string name="my_ip_placeholder">عنواني: —</string>
+    <string name="rx_placeholder">RX: 0 B</string>
+    <string name="tx_placeholder">TX: 0 B</string>
+
+    <!-- شاشة البداية -->
+    <string name="splash_tagline">افحص شبكتك… وتحكم بمن يتصل بها</string>
+
+    <!-- بيانات المطور (متطلبات Google Play) -->
+    <string name="developer_info_title">معلومات المطور والتطبيق</string>
+    <string name="developer_name">المطوّر: أحمد تيتيو (Ahmed Titio)</string>
+    <string name="developer_email">البريد الإلكتروني للدعم: ahmedtitio@gmail.com</string>
+    <string name="app_version_name_text">الإصدار: 1.0 — عبوة الشبكة الذكية</string>
+    <string name="privacy_policy_note">سياسة الخصوصية: هذا التطبيق يعمل محلياً على جهازك فقط ولا يجمع أو يرسل أي بيانات شخصية إلى خوادم خارجية. جميع معلومات الشبكة المعروضة تبقى على هاتفك.</string>
+    <string name="developer_credit">تطوير: Ahmed Titio</string>
 </resources>

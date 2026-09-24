@@ -1,10 +1,12 @@
 package com.example.wifiscanner
 
 import android.os.Bundle
+import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.wifiscanner.ads.AdManager
 import com.example.wifiscanner.databinding.ActivityMainBinding
 import com.example.wifiscanner.ui.DeviceAdapter
 import com.example.wifiscanner.util.BandwidthControlManager
@@ -41,10 +43,11 @@ class MainActivity : AppCompatActivity() {
             else -> { /* الترتيب الافتراضي: حسب ظهور الجهاز أثناء الفحص */ }
         }
         adapter.notifyDataSetChanged()
+        // نص مختصر داخل الزر حتى لا يتداخل مع الأزرار المجاورة
         binding.btnSort.text = when (sortMode) {
-            1 -> getString(R.string.sort_name)
-            2 -> getString(R.string.sort_ip)
-            3 -> getString(R.string.sort_usage)
+            1 -> getString(R.string.sort_btn_name)
+            2 -> getString(R.string.sort_btn_ip)
+            3 -> getString(R.string.sort_btn_usage)
             else -> getString(R.string.sort)
         }
     }
@@ -78,6 +81,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnScan.setOnClickListener { startScan() }
         binding.btnSort.setOnClickListener { cycleSortMode() }
 
+        // تجهيز المساحة الإعلانية (AdManager يتخطيها تلقائياً حتى تفعيل AdMob)
+        AdManager.showBanner(this, binding.adContainerMain)
+
         binding.btnSettings.setOnClickListener {
             startActivity(android.content.Intent(this, SettingsActivity::class.java))
         }
@@ -87,6 +93,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             startScan()
         }
+    }
+
+    /** تعطيل زر الفحص أثناء المسح حتى لا تتداخل النصوص والحالة. */
+    private fun setScanningUi(scanning: Boolean) {
+        binding.btnScan.isEnabled = !scanning
+        binding.btnScan.text = getString(if (scanning) R.string.scanning else R.string.scan)
     }
 
     override fun onRequestPermissionsResult(
@@ -117,7 +129,8 @@ class MainActivity : AppCompatActivity() {
         updateNetworkHeader(prefix)
         binding.textStatus.text = getString(R.string.status_scanning)
         binding.swipeRefresh.isRefreshing = true
-        binding.progressScan.visibility = android.view.View.VISIBLE
+        binding.progressScan.visibility = View.VISIBLE
+        setScanningUi(true)
 
         val s = NetworkScanner(prefix)
         scanner = s
@@ -156,7 +169,8 @@ class MainActivity : AppCompatActivity() {
                     adapter.notifyDataSetChanged()
                     scanning = false
                     binding.swipeRefresh.isRefreshing = false
-                    binding.progressScan.visibility = android.view.View.GONE
+                    binding.progressScan.visibility = View.GONE
+                    setScanningUi(false)
                     binding.textStatus.text =
                         getString(R.string.status_done, devices.size)
                 }
