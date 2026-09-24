@@ -1,25 +1,22 @@
 # Codemagic CI/CD — بناء تطبيق فاحص شبكة الواي فاي (APK)
-# المرجع: نفس هيكل workflow لعبة StarJump، معدّل لهذا المشروع.
 # ملاحظة: ملفات المشروع في جذر المستودع (لا حاجة لـ cd إلى مجلد فرعي).
 workflows:
   wifiscanner-apk:
-    name: بناء فاحص شبكة الواي فاي - APK فقط
+    name: "بناء فاحص شبكة الواي فاي - APK"
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
-      groups:
-        - android-sdk
       vars:
         MODULE_NAME: app
     triggering:
       events:
         - push
       branch_patterns:
-        - pattern: 'main'
+        - pattern: main
           include: true
           source: true
     scripts:
-      - name: إعداد Gradle Wrapper و local.properties
+      - name: اعداد Gradle Wrapper و local.properties
         script: |
           #!/usr/bin/env bash
           set -e
@@ -27,7 +24,6 @@ workflows:
           chmod +x ./gradlew
           ls -la gradle/wrapper/
           ls -la gradlew
-
       - name: بناء APK
         script: |
           #!/usr/bin/env bash
@@ -36,21 +32,19 @@ workflows:
           ./gradlew clean assembleDebug --stacktrace
           echo "===== ملفات الإخراج ====="
           find . -name "*.apk" -type f
-
       - name: نسخ الـ APK لمجلد واضح
         script: |
           #!/usr/bin/env bash
-          mkdir -p $CM_BUILD_DIR/build-output
-          cp app/build/outputs/apk/debug/app-debug.apk $CM_BUILD_DIR/build-output/WiFiScanner-v1.0.apk || {
+          set -e
+          mkdir -p "$CM_BUILD_DIR/build-output"
+          cp app/build/outputs/apk/debug/app-debug.apk "$CM_BUILD_DIR/build-output/WiFiScanner-v1.0.apk" || {
             echo "بحث عن أي apk:"
-            find $CM_BUILD_DIR -name "*.apk" -exec cp {} $CM_BUILD_DIR/build-output/WiFiScanner.apk \;
+            find "$CM_BUILD_DIR" -name "*.apk" -exec cp {} "$CM_BUILD_DIR/build-output/WiFiScanner.apk" \;
           }
-          ls -la $CM_BUILD_DIR/build-output/
-
+          ls -la "$CM_BUILD_DIR/build-output/"
     artifacts:
       - build-output/*.apk
       - app/build/outputs/apk/debug/*.apk
-
     publishing:
       email:
         recipients:
@@ -58,20 +52,11 @@ workflows:
         notify:
           success: true
           failure: true
-
-  # ─────────────────────────────────────────────────────────────
-  # (اختياري) بناء Release موقّع — يتطلب إضافة keystore ومجموعة
-  # متغيرات بيئة باسم android-signing في واجهة Codemagic تحتوي:
-  #   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
-  # ثم شغّل هذا الـ workflow بدلاً من wifiscanner-apk
-  # ─────────────────────────────────────────────────────────────
   wifiscanner-apk-release:
-    name: بناء فاحص شبكة الواي فاي - Release موقّع
+    name: "بناء فاحص شبكة الواي فاي - Release موقع"
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
-      android-sdk:
-        api-level: 34
       groups:
         - android-signing
       vars:
@@ -80,45 +65,41 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: 'main'
+        - pattern: main
           include: true
           source: true
     scripts:
-      - name: إعداد Gradle Wrapper و local.properties
+      - name: اعداد Gradle Wrapper و local.properties
         script: |
           #!/usr/bin/env bash
           set -e
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           chmod +x ./gradlew
-
       - name: فك تشفير الـ keystore
         script: |
           #!/usr/bin/env bash
           set -e
-          echo "$KEYSTORE_BASE64" | base64 -d > $CM_BUILD_DIR/release.keystore
-
-      - name: بناء Release APK موقّع
+          echo "$KEYSTORE_BASE64" | base64 -d > "$CM_BUILD_DIR/release.keystore"
+      - name: بناء Release APK موقع
         script: |
           #!/usr/bin/env bash
           set -e
           ./gradlew clean assembleRelease --stacktrace \
-            -Pkey.store=$CM_BUILD_DIR/release.keystore \
+            -Pkey.store="$CM_BUILD_DIR/release.keystore" \
             -Pkey.store.password="$KEYSTORE_PASSWORD" \
             -Pkey.alias="$KEY_ALIAS" \
             -Pkey.alias.password="$KEY_PASSWORD"
           find . -name "*.apk" -type f
-
       - name: نسخ الـ APK لمجلد واضح
         script: |
           #!/usr/bin/env bash
-          mkdir -p $CM_BUILD_DIR/build-output
-          cp app/build/outputs/apk/release/app-release.apk $CM_BUILD_DIR/build-output/WiFiScanner-v1.0-release.apk
-          ls -la $CM_BUILD_DIR/build-output/
-
+          set -e
+          mkdir -p "$CM_BUILD_DIR/build-output"
+          cp app/build/outputs/apk/release/app-release.apk "$CM_BUILD_DIR/build-output/WiFiScanner-v1.0-release.apk"
+          ls -la "$CM_BUILD_DIR/build-output/"
     artifacts:
       - build-output/*.apk
       - app/build/outputs/apk/release/*.apk
-
     publishing:
       email:
         recipients:
