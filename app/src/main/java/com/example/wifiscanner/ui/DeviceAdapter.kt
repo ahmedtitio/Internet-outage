@@ -29,6 +29,7 @@ class DeviceAdapter(
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val device = devices[position]
+        val context = holder.context
         with(holder.binding) {
             textName.text = buildString {
                 append(device.hostname ?: device.ip)

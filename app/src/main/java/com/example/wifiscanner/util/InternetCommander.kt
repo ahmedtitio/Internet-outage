@@ -74,7 +74,7 @@ class InternetCommander(private val context: Context) {
             val buf = ByteArray(1024)
             val reply = DatagramPacket(buf, buf.size)
             socket.receive(reply)
-            val text = String(reply.data, 0, reply.size).trim()
+            val text = String(buf, 0, reply.length).trim()
             when {
                 text.contains("OK", ignoreCase = true) || text.isNotBlank() ->
                     Result.Success(action)

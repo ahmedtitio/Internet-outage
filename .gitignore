@@ -1,1 +1,14 @@
-(empty)
+*.iml
+.gradle/
+local.properties
+app/local.properties
+.idea/
+.DS_Store
+build/
+app/build/
+captures/
+.externalNativeBuild
+.cxx
+*.keystore
+!app/*.keystore
+hs_err_pid*.log
