@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">فاحص شبكة الواي فاي</string>
+    <string name="scan">بدء الفحص</string>
+    <string name="settings">الإعدادات</string>
+    <string name="sort">الترتيب</string>
+    <string name="sort_name">الترتيب: حسب الاسم</string>
+    <string name="sort_ip">الترتيب: حسب عنوان IP</string>
+    <string name="sort_usage">الترتيب: حسب الاستهلاك</string>
+    <string name="ssid">الشبكة</string>
+    <string name="gateway">البوابة (الراوتر)</string>
+    <string name="my_ip">عنواني</string>
+    <string name="status_scanning">جارٍ فحص الشبكة…</string>
+    <string name="status_found_n">تم العثور على %1$d جهاز…</string>
+    <string name="status_done">اكتمل الفحص — %1$d جهاز متصل</string>
+    <string name="status_not_connected">لم يتم الاتصال بشبكة واي فاي. فعّل الواي فاي أولاً.</string>
+    <string name="reset_stats">إعادة ضبط جميع الإحصائيات</string>
+    <string name="reset_device">تصفير استهلاك هذا الجهاز</string>
+    <string name="device_details">تفاصيل الجهاز</string>
+    <string name="disclaimer">تنبيه: أندرويد لا يسمح لغير تطبيقات مسؤولي الشبكة بقياس استهلاك البيانات الخاص بأجهزة أخرى بدقة. يعرض هذا التطبيق تقديراً مبنياً على نشاط الشبكة المحلي وجدول ARP، ويُظهر استهلاك بيانات هذا الجهاز بدقة عبر TrafficStats. للاستهلاك الدقيق لكل جهاز استخدم صفحة الراوتر الإدارية أو تطبيق يدعم SNMP/mDNS.</string>
+    <string name="connected_devices">الأجهزة المتصلة</string>
+    <string name="network_info">معلومات الشبكة</string>
+    <string name="data_usage">استهلاك البيانات</string>
+    <string name="open_ports">المنافذ المفتوحة</string>
+</resources>

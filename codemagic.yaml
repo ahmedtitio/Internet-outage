@@ -1,0 +1,39 @@
+# Codemagic CI/CD configuration
+# https://codemagic.io  —  Connect your GitHub repository and select this workflow.
+workflows:
+  android-app:
+    name: Android APK (Debug)
+
+    instance_type: linux
+
+    max_build_duration: 60
+
+    environment:
+      groups:
+        - android-signing   # optional: define keystore vars in Codemagic UI for release builds
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false"
+
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+      - name: Grant execute permission for gradlew
+        script: chmod +x gradlew
+      - name: Build Debug APK
+        script: ./gradlew assembleDebug --stacktrace
+      # Uncomment to build a signed Release APK instead
+      # - name: Decode keystore
+      #   script: |
+      #     echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
+      # - name: Build Release APK
+      #   script: ./gradlew assembleRelease -Pkey.store=release.keystore -Pkey.alias="$KEY_ALIAS" -Pkey.store.password="$KEYSTORE_PASSWORD" -Pkey.alias.password="$KEY_PASSWORD" --stacktrace
+
+    artifacts:
+      - app/build/outputs/**/*.apk
+
+    # Optional: publish the APK directly from Codemagic
+    # publishing:
+    #   email:
+    #     recipients:
+    #       - you@example.com

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="bg_card">#FF1E2A38</color>
+    <color name="bg_screen">#FF12181F</color>
+    <color name="text_secondary">#FFB0BEC5</color>
+    <color name="accent">#FF4FC3F7</color>
+</resources>
