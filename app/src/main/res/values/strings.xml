@@ -22,4 +22,25 @@
     <string name="network_info">معلومات الشبكة</string>
     <string name="data_usage">استهلاك البيانات</string>
     <string name="open_ports">المنافذ المفتوحة</string>
+
+    <!-- التحكم في النطاق الترددي -->
+    <string name="bandwidth_control">التحكم في الإنترنت</string>
+    <string name="block_device">قطع الإنترنت عن هذا الجهاز</string>
+    <string name="unblock_device">رفع الحظر واستعادة الاتصال</string>
+    <string name="throttle_limit">تحديد سرعة الإنترنت</string>
+    <string name="remove_throttle">إزالة تحديد السرعة</string>
+    <string name="download_limit">حد التنزيل (Kbps)</string>
+    <string name="upload_limit">حد الرفع (Kbps)</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="blocked_badge">⛔ محظور</string>
+    <string name="throttled_badge">🐢 محدود: %1$s</string>
+    <string name="bandwidth_disclaimer">تنبيه مهم: أندرويد لا يسمح للتطبيقات العادية بفرض قيود فعلية على أجهزة أخرى ضمن الشبكة — هذا يتطلب صلاحيات الراوتر أو root. القواعد التي تضبطها هنا تُدار وتُنفَّذ من صفحة الراوتر الإدارية (Parental Controls / Bandwidth Control / MAC Filter) أو عبر تطبيق يدعم TM-Network-Manager. يستخدم هذا التطبيق بروتوكول TMAC (نفس بروتوكول تطبيق Fing) لإرسال أوامر الحظر إلى الراوتر إذا كان مدعوماً.</string>
+    <string name="router_cmd_sent">تم إرسال الأمر إلى الراوتر: %1$s</string>
+    <string name="router_cmd_failed">تعذّر تنفيذ الأمر — الراوتر قد لا يدعم التحكم الخارجي. افتح صفحة الراوتر وطبّق القاعدة يدوياً (MAC: %1$s).</string>
+    <string name="action_log">سجل الإجراءات</string>
+    <string name="no_actions">لا توجد إجراءات مسجّلة بعد</string>
+    <string name="clear_log">تفريغ السجل</string>
+    <string name="confirm_block">هل تريد قطع الإنترنت عن %1$s؟</string>
+    <string name="confirm_unblock">هل تريد إعادة الاتصال لـ %1$s؟</string>
 </resources>

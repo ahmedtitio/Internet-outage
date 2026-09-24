@@ -1,13 +1,17 @@
 package com.example.wifiscanner
 
 import android.os.Bundle
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.wifiscanner.databinding.ActivityMainBinding
 import com.example.wifiscanner.ui.DeviceAdapter
+import com.example.wifiscanner.util.BandwidthControlManager
 import com.example.wifiscanner.util.ConnectedDevice
 import com.example.wifiscanner.util.DataUsageTracker
 import com.example.wifiscanner.util.DeviceStatsStore
+import com.example.wifiscanner.util.InternetCommander
 import com.example.wifiscanner.util.NetworkScanner
 import com.example.wifiscanner.util.PermissionHelper
 import com.example.wifiscanner.util.VendorLookup
@@ -19,9 +23,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: DeviceAdapter
     private lateinit var statsStore: DeviceStatsStore
+    private lateinit var controlManager: BandwidthControlManager
+    private lateinit var commander: InternetCommander
     private val devices = mutableListOf<ConnectedDevice>()
     private var scanner: NetworkScanner? = null
     private var scanning = false
+    private var subnetPrefix: String? = null
     private var sortMode = 0 // 0 = افتراضي (حسب الاكتشاف)، 1 = الاسم، 2 = IP، 3 = الاستهلاك
 
     /** التبديل بين أوضاع ترتيب قائمة الأجهزة مع تحديث العرض. */
@@ -48,7 +55,20 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         statsStore = DeviceStatsStore(this)
-        adapter = DeviceAdapter(devices) { device -> openDetails(device) }
+        controlManager = BandwidthControlManager(this)
+        commander = InternetCommander(this)
+        controlManager.cleanupExpiredBlocks()
+        adapter = DeviceAdapter(
+            devices,
+            onClick = { device -> openDeviceMenu(device) },
+            isBlocked = { mac -> controlManager.isDeviceBlocked(mac) },
+            throttleLabel = { mac ->
+                controlManager.getThrottleRuleForDevice(mac)?.let {
+                    BandwidthControlManager.formatSpeed(it.downloadLimitKbps)
+                }
+            },
+            onBlockToggle = { device -> toggleBlock(device) }
+        )
         binding.recyclerDevices.layoutManager = LinearLayoutManager(this)
         binding.recyclerDevices.adapter = adapter
 
@@ -90,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         scanning = true
+        subnetPrefix = prefix
         statsStore.resetAll() // نبدأ جولة قياس جديدة لكل الأجهزة
         devices.clear()
         adapter.notifyDataSetChanged()
@@ -160,6 +181,135 @@ class MainActivity : AppCompatActivity() {
             putExtra(DeviceDetailsActivity.EXTRA_VENDOR, device.vendor ?: "")
         }
         startActivity(intent)
+    }
+
+    // ==================== التحكم في الإنترنت للأجهزة المتطفلة ====================
+
+    /** قائمة الخيارات عند الضغط على جهاز: تفاصيل / قطع الاتصال / تحديد السرعة. */
+    private fun openDeviceMenu(device: ConnectedDevice) {
+        if (device.isMe) { openDetails(device); return }
+        val blocked = controlManager.isDeviceBlocked(device.mac)
+        val options = arrayOf(
+            getString(R.string.device_details),
+            if (blocked) getString(R.string.unblock_device) else getString(R.string.block_device),
+            getString(R.string.throttle_limit),
+            getString(R.string.action_log)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(device.hostname ?: device.ip)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> openDetails(device)
+                    1 -> toggleBlock(device)
+                    2 -> showThrottleDialog(device)
+                    3 -> showActionLog()
+                }
+            }
+            .show()
+    }
+
+    /** حظر/رفع حظر الجهاز: يحفظ القاعدة محلياً ويرسلها للراوتر إذا كان مدعوماً. */
+    private fun toggleBlock(device: ConnectedDevice) {
+        val name = device.hostname?.takeIf { it.isNotBlank() } ?: device.ip
+        val gateway = subnetPrefix?.let { WifiUtils.gatewayOf(it) }
+            ?: WifiUtils.getLocalSubnetPrefix(this)?.let { WifiUtils.gatewayOf(it) }
+            ?: "192.168.1.1"
+
+        if (controlManager.isDeviceBlocked(device.mac)) {
+            AlertDialog.Builder(this)
+                .setMessage(getString(R.string.confirm_unblock, name))
+                .setPositiveButton(R.string.save) { _, _ ->
+                    controlManager.unblockDevice(device.mac)
+                    commander.allowDevice(gateway, device.mac) { result ->
+                        runOnUiThread { reportRouterResult(result, device.mac) }
+                    }
+                    adapter.notifyDataSetChanged()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        } else {
+            AlertDialog.Builder(this)
+                .setMessage(getString(R.string.confirm_block, name))
+                .setPositiveButton(R.string.block_device) { _, _ ->
+                    controlManager.blockDevice(device.mac, device.ip, name)
+                    commander.blockDevice(gateway, device.mac) { result ->
+                        runOnUiThread { reportRouterResult(result, device.mac) }
+                    }
+                    adapter.notifyDataSetChanged()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+    }
+
+    /** حوار تحديد سرعة التنزيل/الرفع لجهاز معين. */
+    private fun showThrottleDialog(device: ConnectedDevice) {
+        val name = device.hostname?.takeIf { it.isNotBlank() } ?: device.ip
+        val existing = controlManager.getThrottleRules()
+            .find { it.macAddress.equals(device.mac, ignoreCase = true) }
+
+        val layout = android.widget.LinearLayout(this).apply {
+            setPadding(48, 24, 48, 0)
+            orientation = android.widget.LinearLayout.VERTICAL
+        }
+        val etDownload = EditText(this).apply {
+            hint = getString(R.string.download_limit)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(existing?.downloadLimitKbps?.toString().orEmpty())
+        }
+        val etUpload = EditText(this).apply {
+            hint = getString(R.string.upload_limit)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(existing?.uploadLimitKbps?.toString().orEmpty())
+        }
+        layout.addView(etDownload)
+        layout.addView(etUpload)
+
+        AlertDialog.Builder(this)
+            .setTitle("$name — ${getString(R.string.throttle_limit)}")
+            .setView(layout)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val down = etDownload.text.toString().toIntOrNull() ?: 0
+                val up = etUpload.text.toString().toIntOrNull() ?: 0
+                if (down == 0 && up == 0) {
+                    controlManager.removeThrottleRule(device.mac)
+                } else {
+                    controlManager.addThrottleRule(device.mac, name, down, up)
+                }
+                adapter.notifyDataSetChanged()
+            }
+            .setNeutralButton(
+                if (existing != null) getString(R.string.remove_throttle) else ""
+            ) { _, _ ->
+                controlManager.removeThrottleRule(device.mac)
+                adapter.notifyDataSetChanged()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** عرض سجل الإجراءات المنفذة. */
+    private fun showActionLog() {
+        val logs = controlManager.getActionLogs()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.action_log)
+            .setMessage(if (logs.isEmpty()) getString(R.string.no_actions)
+                        else logs.joinToString("\n"))
+            .setNeutralButton(R.string.clear_log) { _, _ -> controlManager.clearActionLogs() }
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun reportRouterResult(result: InternetCommander.Result, mac: String) {
+        val msg = when (result) {
+            is InternetCommander.Result.Success ->
+                getString(R.string.router_cmd_sent, result.action)
+            is InternetCommander.Result.Unsupported ->
+                getString(R.string.router_cmd_failed, mac)
+            is InternetCommander.Result.Failed ->
+                getString(R.string.router_cmd_failed, mac)
+        }
+        android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {
