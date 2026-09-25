@@ -15,6 +15,7 @@ import com.example.wifiscanner.util.DataUsageTracker
 import com.example.wifiscanner.util.DeviceStatsStore
 import com.example.wifiscanner.util.InternetCommander
 import com.example.wifiscanner.util.MulticastHelper
+import com.example.wifiscanner.util.NetworkNeighbors
 import com.example.wifiscanner.util.NetworkScanner
 import com.example.wifiscanner.util.PermissionHelper
 import com.example.wifiscanner.util.VendorLookup
@@ -88,6 +89,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnScan.setOnClickListener { startScan() }
         binding.btnSort.setOnClickListener { cycleSortMode() }
 
+        // زر الإضافة اليدوية — للحالات التي يحجب فيها الراوتر ARP
+        binding.btnAddManual.setOnClickListener { showAddManualDialog() }
+
         // تجهيز المساحة الإعلانية (AdManager يتخطيها تلقائياً حتى تفعيل AdMob)
         AdManager.showBanner(this, binding.adContainerMain)
 
@@ -152,31 +156,44 @@ class MainActivity : AppCompatActivity() {
         binding.progressScan.visibility = View.VISIBLE
         setScanningUi(true)
 
+        val myIp = WifiInfoProvider.deviceIp(WifiInfoProvider.currentWifiInfo(this))
         val s = NetworkScanner(prefix)
         scanner = s
+
+        /** إضافة جهاز إلى القائمة مع منع التكرار حسب IP أو MAC */
+        fun addDevice(ip: String, mac: String, nameOverride: String? = null) {
+            if (devices.any { it.ip == ip || (mac != "00:00:00:00:00:00" && it.mac == mac) }) return
+            val hostname = nameOverride ?: s.resolveHostname(ip)
+            val dev = ConnectedDevice(
+                ip = ip,
+                mac = mac,
+                hostname = hostname,
+                vendor = VendorLookup.vendorOf(mac),
+                isMe = ip == myIp,
+                totalBytes = 0L
+            )
+            statsStore.setFirstSeen(mac, System.currentTimeMillis())
+            statsStore.setSnapshotBytes(mac, DataUsageTracker.deviceTotalRx() + DataUsageTracker.deviceTotalTx())
+            devices.add(dev)
+            adapter.notifyItemInserted(devices.size - 1)
+            binding.textStatus.text = getString(R.string.status_found_n, devices.size)
+        }
+
         s.scan(object : NetworkScanner.ScanCallback {
             override fun onDeviceFound(ip: String, mac: String) {
-                runOnUiThread {
-                    val hostname = s.resolveHostname(ip)
-                    val dev = ConnectedDevice(
-                        ip = ip,
-                        mac = mac,
-                        hostname = hostname,
-                        vendor = VendorLookup.vendorOf(mac),
-                        isMe = ip == WifiInfoProvider.deviceIp(WifiInfoProvider.currentWifiInfo(this@MainActivity)),
-                        totalBytes = 0L
-                    )
-                    statsStore.setFirstSeen(mac, System.currentTimeMillis())
-                    statsStore.setSnapshotBytes(mac, DataUsageTracker.deviceTotalRx() + DataUsageTracker.deviceTotalTx())
-                    devices.add(dev)
-                    adapter.notifyItemInserted(devices.size - 1)
-                    binding.textStatus.text =
-                        getString(R.string.status_found_n, devices.size)
-                }
+                runOnUiThread { addDevice(ip, mac) }
             }
 
             override fun onFinished(map: Map<String, String>) {
                 runOnUiThread {
+                    // 5) جيران IPv6 (link-local) — تلتقط أجهزة تظهر فقط عبر IPv6
+                    for ((ip, mac) in NetworkNeighbors.ipv6Neighbors()) {
+                        if (ip.startsWith("$subnetPrefix.")) addDevice(ip, mac)
+                    }
+                    // 6) الأجهزة المضافة يدوياً من شاشة الإعدادات/القائمة
+                    for ((ip, mac) in manualDevices()) {
+                        addDevice(ip, mac, nameOverride = manualNameOf(ip))
+                    }
                     // أوقف الاستماع بعد اكتمال الفحص وحرّر قفل البث المتعدد
                     multicast.stop()
                     MulticastHelper.releaseMulticastLock()
@@ -195,11 +212,74 @@ class MainActivity : AppCompatActivity() {
                     binding.swipeRefresh.isRefreshing = false
                     binding.progressScan.visibility = View.GONE
                     setScanningUi(false)
-                    binding.textStatus.text =
-                        getString(R.string.status_done, devices.size)
+                    binding.textStatus.text = when {
+                        devices.isNotEmpty() -> getString(R.string.status_done, devices.size)
+                        else -> getString(R.string.status_empty_diagnosis,
+                            WifiUtils.gatewayOf(prefix))
+                    }
                 }
             }
         })
+    }
+
+    // ==================== الأجهزة المضافة يدوياً ====================
+
+    private fun manualPrefs() = getSharedPreferences("manual_devices", MODE_PRIVATE)
+
+    private fun manualDevices(): Map<String, String> {
+        // ip -> mac
+        val all = manualPrefs().all
+        return all.entries
+            .filter { (k, v) -> !k.startsWith("name_") && v is String && v.contains(":") }
+            .associate { (k, v) -> k to (v as String) }
+    }
+
+    private fun manualNameOf(ip: String): String? =
+        manualPrefs().getString("name_$ip", null)
+
+    /** حوار إضافة جهاز يدوياً عندما تحجب الراوتر معلومات ARP */
+    private fun showAddManualDialog() {
+        val layout = android.widget.LinearLayout(this).apply {
+            setPadding(48, 24, 48, 0)
+            orientation = android.widget.LinearLayout.VERTICAL
+        }
+        val etName = EditText(this).apply { hint = getString(R.string.manual_name_hint) }
+        val etIp = EditText(this).apply {
+            hint = getString(R.string.manual_ip_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+            setText(subnetPrefix?.let { "$it." } ?: "")
+        }
+        val etMac = EditText(this).apply {
+            hint = getString(R.string.manual_mac_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+        }
+        layout.addView(etName); layout.addView(etIp); layout.addView(etMac)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.add_manual_device)
+            .setView(layout)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val ip = etIp.text.toString().trim()
+                val mac = etMac.text.toString().trim().uppercase()
+                if (ip.matches(Regex("^\\d+\\.\\d+\\.\\d+\\.\\d+$"))) {
+                    val validMac = if (mac.matches(Regex("^([0-9A-F]{2}:){5}[0-9A-F]{2}$"))) mac
+                                   else "00:00:00:00:00:00"
+                    manualPrefs().edit()
+                        .putString(ip, validMac)
+                        .putString("name_$ip", etName.text.toString().trim().ifBlank { ip })
+                        .apply()
+                    val name = etName.text.toString().trim().ifBlank { null }
+                    if (devices.none { it.ip == ip }) {
+                        devices.add(ConnectedDevice(
+                            ip = ip, mac = validMac,
+                            hostname = name ?: manualNameOf(ip),
+                            vendor = VendorLookup.vendorOf(validMac),
+                            isMe = false, totalBytes = 0L))
+                        adapter.notifyItemInserted(devices.size - 1)
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun updateNetworkHeader(prefix: String) {

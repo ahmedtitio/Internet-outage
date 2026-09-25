@@ -67,4 +67,11 @@
     <string name="developer_credit">تطوير: Ahmed Titio</string>
     <string name="status_need_permission">يجب منح إذن الوصول للأجهزة القريبة/الموقع لبدء الفحص</string>
     <string name="status_no_subnet">تعذّر تحديد نطاق الشبكة — تأكد من الاتصال بشبكة واي فاي منزلية (وليس نقطة اتصال هاتف)</string>
+
+    <string name="add_short">إضافة</string>
+    <string name="add_manual_device">إضافة جهاز يدوياً</string>
+    <string name="manual_name_hint">اسم الجهاز (اختياري)</string>
+    <string name="manual_ip_hint">عنوان IP (مثال: 192.168.1.50)</string>
+    <string name="manual_mac_hint">عنوان MAC (مثال: AA:BB:CC:DD:EE:FF)</string>
+    <string name="status_empty_diagnosis">لم يتم العثور على أجهزة. إذا كنت متأكداً من وجود أجهزة متصلة فافتح صفحة الراوتر %1$s وأضف الأجهزة يدوياً من زر «إضافة» — بعض الراوترات تحجب جدول ARP عن التطبيقات.</string>
 </resources>

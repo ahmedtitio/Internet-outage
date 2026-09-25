@@ -111,6 +111,20 @@
                     android:autoSizeTextType="none"
                     android:ellipsize="end"
                     android:text="@string/sort" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddManual"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.7"
+                    android:layout_marginStart="8dp"
+                    android:textSize="13sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    app:icon="@drawable/ic_add"
+                    app:iconGravity="textStart"
+                    android:text="@string/add_short" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton

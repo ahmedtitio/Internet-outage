@@ -134,4 +134,11 @@ Developer: Ahmed Titio
 Support: ahmedtitio@gmail.com</string>
     <string name="status_need_permission">Grant Nearby devices / Location permission to start scanning</string>
     <string name="status_no_subnet">Could not detect the network range — make sure you are on a home Wi-Fi (not a phone hotspot)</string>
+
+    <string name="add_short">Add</string>
+    <string name="add_manual_device">Add device manually</string>
+    <string name="manual_name_hint">Device name (optional)</string>
+    <string name="manual_ip_hint">IP address (e.g. 192.168.1.50)</string>
+    <string name="manual_mac_hint">MAC address (e.g. AA:BB:CC:DD:EE:FF)</string>
+    <string name="status_empty_diagnosis">No devices found. If you are sure devices are connected, open the router page at %1$s and add devices with the Add button — some routers hide the ARP table from apps.</string>
 </resources>
