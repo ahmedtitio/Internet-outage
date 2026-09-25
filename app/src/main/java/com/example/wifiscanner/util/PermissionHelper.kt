@@ -15,12 +15,23 @@ object PermissionHelper {
 
     fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.NEARBY_WIFI_DEVICES,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
+            // NEARBY_WIFI_DEVICES يكفي لفحص الشبكة؛ الموقع لم يعد مطلوباً
+            arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    /** هل المستخدم متصل فعلياً بشبكة واي فاي الآن؟ */
+    fun isOnWifi(context: Context): Boolean {
+        return try {
+            val cm = context.applicationContext
+                .getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            val net = cm?.activeNetwork
+            val caps = net?.let { cm.getNetworkCapabilities(it) }
+            caps?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true
+        } catch (_: Exception) {
+            false
         }
     }
 

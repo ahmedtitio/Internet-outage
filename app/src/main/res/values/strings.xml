@@ -65,4 +65,6 @@
     <string name="app_version_name_text">الإصدار: 1.0 — عبوة الشبكة الذكية</string>
     <string name="privacy_policy_note">سياسة الخصوصية: هذا التطبيق يعمل محلياً على جهازك فقط ولا يجمع أو يرسل أي بيانات شخصية إلى خوادم خارجية. جميع معلومات الشبكة المعروضة تبقى على هاتفك.</string>
     <string name="developer_credit">تطوير: Ahmed Titio</string>
+    <string name="status_need_permission">يجب منح إذن الوصول للأجهزة القريبة/الموقع لبدء الفحص</string>
+    <string name="status_no_subnet">تعذّر تحديد نطاق الشبكة — تأكد من الاتصال بشبكة واي فاي منزلية (وليس نقطة اتصال هاتف)</string>
 </resources>

@@ -132,4 +132,6 @@ Discover devices on your network, monitor their internet usage, and throttle or 
 
 Developer: Ahmed Titio
 Support: ahmedtitio@gmail.com</string>
+    <string name="status_need_permission">Grant Nearby devices / Location permission to start scanning</string>
+    <string name="status_no_subnet">Could not detect the network range — make sure you are on a home Wi-Fi (not a phone hotspot)</string>
 </resources>

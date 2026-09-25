@@ -14,6 +14,7 @@ import com.example.wifiscanner.util.ConnectedDevice
 import com.example.wifiscanner.util.DataUsageTracker
 import com.example.wifiscanner.util.DeviceStatsStore
 import com.example.wifiscanner.util.InternetCommander
+import com.example.wifiscanner.util.MulticastHelper
 import com.example.wifiscanner.util.NetworkScanner
 import com.example.wifiscanner.util.PermissionHelper
 import com.example.wifiscanner.util.VendorLookup
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var commander: InternetCommander
     private val devices = mutableListOf<ConnectedDevice>()
     private var scanner: NetworkScanner? = null
+    private lateinit var multicast: MulticastHelper
     private var scanning = false
     private var subnetPrefix: String? = null
     private var sortMode = 0 // 0 = افتراضي (حسب الاكتشاف)، 1 = الاسم، 2 = IP، 3 = الاستهلاك
@@ -64,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         statsStore = DeviceStatsStore(this)
         controlManager = BandwidthControlManager(this)
         commander = InternetCommander(this)
+        multicast = MulticastHelper(this)
         controlManager.cleanupExpiredBlocks()
         adapter = DeviceAdapter(
             devices,
@@ -118,15 +121,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun startScan() {
         if (scanning) return
+
+        // تشخيص واضح للمستخدم بدل قائمة فارغة بلا سبب
+        if (!PermissionHelper.hasScanPermissions(this)) {
+            binding.textStatus.text = getString(R.string.status_need_permission)
+            PermissionHelper.requestScanPermissions(this)
+            return
+        }
+        if (!PermissionHelper.isOnWifi(this)) {
+            binding.textStatus.text = getString(R.string.status_not_connected)
+            return
+        }
         val prefix = WifiUtils.getLocalSubnetPrefix(this)
         if (prefix == null) {
-            binding.textStatus.text = getString(R.string.status_not_connected)
-            binding.swipeRefresh.isRefreshing = false
+            binding.textStatus.text = getString(R.string.status_no_subnet)
             return
         }
 
         scanning = true
         subnetPrefix = prefix
+        // قفل البث المتعدد — ضروري لاستقبال حزم mDNS/SSDP على معظم الأجهزة
+        MulticastHelper.acquireMulticastLock(this)
+        multicast.start()
         statsStore.resetAll() // نبدأ جولة قياس جديدة لكل الأجهزة
         devices.clear()
         adapter.notifyDataSetChanged()
@@ -161,6 +177,10 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFinished(map: Map<String, String>) {
                 runOnUiThread {
+                    // أوقف الاستماع بعد اكتمال الفحص وحرّر قفل البث المتعدد
+                    multicast.stop()
+                    MulticastHelper.releaseMulticastLock()
+
                     // حساب الفروق منذ بداية الجولة كتقدير تراكمي للنشاط على الشبكة
                     val now = DataUsageTracker.deviceTotalRx() + DataUsageTracker.deviceTotalTx()
                     map.keys.forEach { ip ->
@@ -333,5 +353,9 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         scanner = null
+        if (::multicast.isInitialized) {
+            multicast.stop()
+            MulticastHelper.releaseMulticastLock()
+        }
     }
 }

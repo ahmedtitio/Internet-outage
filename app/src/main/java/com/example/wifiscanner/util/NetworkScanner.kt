@@ -2,18 +2,18 @@ package com.example.wifiscanner.util
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Socket
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 
 /**
- * ماسح الشبكة المحلية: يكتشف الأجهزة المتصلة بشبكة الواي فاي الخاصة بك
- * عن طريق:
- *  1) فحص ARP cache (قراءة /proc/net/arp).
- *  2) Ping sweep متوازي على نطاق /24.
- *  3) استعلام اسم المضيف (reverse DNS) لكل جهاز.
+ * ماسح الشبكة المحلية المطوّر: يجمع بين ثلاث طرق للكشف عن الأجهزة:
+ *  1) ARP cache (قراءة /proc/net/arp) — يعرض كل الأجهزة التي تواصلت
+ *     مع الراوتر مؤخراً حتى لو كانت تحجب الـ ping.
+ *  2) Ping sweep متوازي على كامل نطاق /24.
+ *  3) UDP sweep على منافذ الخدمات الشائعة (mDNS/SSDP/SMB/DLNA...)
+ *     لإيقاظ ARP cache للأجهزة التي ترفض ICMP.
  */
 class NetworkScanner(private val subnetPrefix: String) {
 
@@ -24,36 +24,46 @@ class NetworkScanner(private val subnetPrefix: String) {
         fun onFinished(devices: Map<String, String>) // ip -> mac
     }
 
-    /**
-     * تنفيذ الفحص بشكل غير متزامن. يعالج النتائج عبر callback في خلفية العمل.
-     */
+    /** تنفيذ الفحص بشكل غير متزامن. يعالج النتائج عبر callback في خلفية العمل. */
     fun scan(callback: ScanCallback) {
         val found = LinkedHashMap<String, String>()
+        val myIp = localIpAddress()
 
-        // 1) ARP cache أولاً
-        readArpCache().forEach { (ip, mac) ->
-            if (ip.startsWith("$subnetPrefix.") && isValidMac(mac)) {
-                synchronized(found) { found[ip] = mac }
-                callback.onDeviceFound(ip, mac)
-            }
-        }
-
-        // 2) Ping sweep للأماكن الناقصة
-        val futures = (1..254).map { host ->
-            pool.submit {
-                val ip = "$subnetPrefix.$host"
-                if (!ping(ip)) return@submit
-                val mac = arpLookup(ip) ?: "00:00:00:00:00:00"
-                synchronized(found) {
-                    if (!found.containsKey(ip)) {
-                        found[ip] = mac
-                        callback.onDeviceFound(ip, mac)
-                    }
+        fun report(ip: String, mac: String) {
+            if (ip == myIp) return // لا نضيف جهازنا مرتين بطريقة خاطئة
+            synchronized(found) {
+                if (!found.containsKey(ip)) {
+                    found[ip] = mac
+                    callback.onDeviceFound(ip, mac)
                 }
             }
         }
+
+        // 1) ARP cache أولاً — أغنى مصدر للمعلومات بدون أي حجب
+        readArpCache().forEach { (ip, mac) ->
+            if (ip.startsWith("$subnetPrefix.") && isValidMac(mac)) report(ip, mac)
+        }
+
+        // 2) Ping sweep + 3) UDP sweep معاً لبقية العناوين
+        val commonPorts = intArrayOf(137, 1900, 5353, 5000, 8080, 445)
+        val futures = (1..254).map { host ->
+            pool.submit {
+                val ip = "$subnetPrefix.$host"
+                var alive = ping(ip)
+                if (!alive) alive = udpProbe(ip, commonPorts)
+                if (!alive) return@submit
+                // بعد أي تواصل ناجح يظهر الجهاز غالباً في ARP cache
+                val mac = arpLookup(ip) ?: "00:00:00:00:00:00"
+                report(ip, mac)
+            }
+        }
+
         thread(isDaemon = true) {
             futures.forEach { try { it.get() } catch (_: Exception) {} }
+            // جولة أخيرة من ARP cache لالتقاط ما ظهر أثناء الفحص
+            readArpCache().forEach { (ip, mac) ->
+                if (ip.startsWith("$subnetPrefix.") && isValidMac(mac)) report(ip, mac)
+            }
             pool.shutdown()
             callback.onFinished(LinkedHashMap(found))
         }
@@ -61,7 +71,28 @@ class NetworkScanner(private val subnetPrefix: String) {
 
     private fun ping(ip: String): Boolean {
         return try {
-            InetAddress.getByName(ip).isReachable(700)
+            java.net.InetAddress.getByName(ip).isReachable(500)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** إرسال حزمة UDP قصيرة لإيقاظ استجابة/تسجيل في ARP عند الأجهزة الرافضة لـ ICMP */
+    private fun udpProbe(ip: String, ports: IntArray): Boolean {
+        return try {
+            java.net.DatagramSocket().use { sock ->
+                sock.soTimeout = 250
+                for (port in ports) {
+                    try {
+                        val msg = ByteArray(4)
+                        sock.send(java.net.DatagramPacket(msg, msg.size,
+                            java.net.InetAddress.getByName(ip), port))
+                    } catch (_: Exception) {}
+                }
+            }
+            // مهلة قصيرة ليُسجَّل الرد في ARP cache
+            Thread.sleep(120)
+            arpLookup(ip) != null
         } catch (_: Exception) {
             false
         }
@@ -97,10 +128,27 @@ class NetworkScanner(private val subnetPrefix: String) {
         mac.matches(Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")) &&
                 mac != "00:00:00:00:00:00"
 
+    /** عنوان IPv4 الحالي للجهاز على الواي فاي (لاكتشاف "نفسه") */
+    private fun localIpAddress(): String? {
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces()
+            for (intf in interfaces) {
+                if (!intf.isUp || intf.isLoopback) continue
+                if (!intf.name.lowercase().startsWith("wlan")) continue
+                for (addr in intf.inetAddresses) {
+                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
+                        return addr.hostAddress
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return null
+    }
+
     /** محاولة التعرف على اسم مضيف عبر reverse DNS */
     fun resolveHostname(ip: String): String? {
         return try {
-            val addr = InetAddress.getByName(ip)
+            val addr = java.net.InetAddress.getByName(ip)
             val name = addr.canonicalHostName
             if (name == ip) null else name
         } catch (_: Exception) {
@@ -114,8 +162,8 @@ class NetworkScanner(private val subnetPrefix: String) {
         val tasks = ports.map { port ->
             pool.submit {
                 try {
-                    Socket().use { s ->
-                        s.connect(InetSocketAddress(ip, port), 300)
+                    java.net.Socket().use { s ->
+                        s.connect(java.net.InetSocketAddress(ip, port), 300)
                         synchronized(open) { open.add(port) }
                     }
                 } catch (_: Exception) {
