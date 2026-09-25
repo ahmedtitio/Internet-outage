@@ -14,13 +14,40 @@ object PermissionHelper {
     const val REQ_CODE = 1001
 
     fun requiredPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val list = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // NEARBY_WIFI_DEVICES يكفي لفحص الشبكة؛ الموقع لم يعد مطلوباً
-            arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+            list += Manifest.permission.NEARBY_WIFI_DEVICES
         } else {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            list += Manifest.permission.ACCESS_FINE_LOCATION
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list += Manifest.permission.POST_NOTIFICATIONS
+        }
+        return list.toTypedArray()
     }
+
+    /** الأذونات الحرجة التي بدونها لا يعمل الفحص إطلاقاً. */
+    private val criticalPermissions: List<String>
+        get() = listOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            else Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
+    fun hasCriticalPermissions(context: Context): Boolean =
+        criticalPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) ==
+                    PackageManager.PERMISSION_GRANTED
+        }
+
+    /** هل رفض المستخدم الإذن نهائياً (النظام لن يعرض الحوار مرة أخرى)؟ */
+    fun isPermanentlyDenied(activity: Activity): Boolean =
+        criticalPermissions.any {
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, it) &&
+                    ContextCompat.checkSelfPermission(activity, it) !=
+                    PackageManager.PERMISSION_GRANTED
+        }
 
     /** هل المستخدم متصل فعلياً بشبكة واي فاي الآن؟ */
     fun isOnWifi(context: Context): Boolean {

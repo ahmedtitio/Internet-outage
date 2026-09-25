@@ -100,9 +100,60 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!PermissionHelper.hasScanPermissions(this)) {
-            PermissionHelper.requestScanPermissions(this)
+            showPermissionGateDialog(firstTime = true)
         } else {
             startScan()
+        }
+    }
+
+    // ==================== بوابة الأذونات الإلزامية ====================
+
+    private var permissionDialog: AlertDialog? = null
+
+    /**
+     * نافذة إلزامية عند بدء التشغيل: التطبيق لا يعمل نهائياً بدون الأذونات.
+     * النقر خارج الحوار لا يغلقه، وزر الخروج يظهر فقط عند الرفض النهائي.
+     */
+    private fun showPermissionGateDialog(firstTime: Boolean) {
+        if (permissionDialog?.isShowing == true) return
+        val view = layoutInflater.inflate(R.layout.dialog_permission_gate, null)
+        val status = view.findViewById<android.widget.TextView>(R.id.textPermStatus)
+        val permanentlyDenied = !firstTime && PermissionHelper.isPermanentlyDenied(this)
+
+        if (permanentlyDenied) {
+            status.visibility = View.VISIBLE
+            status.text = getString(R.string.perm_denied_permanent)
+        }
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.perm_gate_title)
+            .setView(view)
+            .setCancelable(false)
+            .setPositiveButton(R.string.perm_grant) { _, _ -> requestPermissionsAndRetry() }
+            .setNegativeButton(R.string.perm_open_settings) { _, _ -> openAppSettings() }
+            .setNeutralButton(R.string.exit_app) { _, _ -> finishAffinity() }
+
+        permissionDialog = builder.show()
+        // منع إغلاق الحوار بالضغط خارجه
+        permissionDialog?.setCanceledOnTouchOutside(false)
+    }
+
+    private fun requestPermissionsAndRetry() {
+        PermissionHelper.requestScanPermissions(this)
+    }
+
+    private fun openAppSettings() {
+        try {
+            val intent = android.content.Intent(
+                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                android.net.Uri.fromParts("package", packageName, null)
+            )
+            startActivity(intent)
+        } catch (_: Exception) {
+            android.widget.Toast.makeText(
+                this, getString(R.string.perm_still_missing),
+                android.widget.Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -116,9 +167,26 @@ class MainActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PermissionHelper.REQ_CODE &&
-            grantResults.isNotEmpty() && grantResults.all { it >= 0 }
-        ) {
+        if (requestCode == PermissionHelper.REQ_CODE) {
+            permissionDialog?.dismiss()
+            permissionDialog = null
+            if (PermissionHelper.hasCriticalPermissions(this)) {
+                // الإذن الحرج مُنح — ابدأ الفحص فوراً
+                startScan()
+            } else {
+                // ما زال مرفوضاً — أعد فتح بوابة الأذونات الإلزامية
+                binding.textStatus.text = getString(R.string.perm_still_missing)
+                showPermissionGateDialog(firstTime = false)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // إذا عاد المستخدم من إعدادات التطبيق بعد منح الأذن يدوياً → ابدأ العمل
+        if (!scanning && PermissionHelper.hasCriticalPermissions(this) && devices.isEmpty()) {
+            permissionDialog?.dismiss()
+            permissionDialog = null
             startScan()
         }
     }
@@ -126,10 +194,10 @@ class MainActivity : AppCompatActivity() {
     private fun startScan() {
         if (scanning) return
 
-        // تشخيص واضح للمستخدم بدل قائمة فارغة بلا سبب
-        if (!PermissionHelper.hasScanPermissions(this)) {
+        // بدون الأذونات الحرجة التطبيق لا يعمل — أعد فتح بوابة الأذونات الإلزامية
+        if (!PermissionHelper.hasCriticalPermissions(this)) {
             binding.textStatus.text = getString(R.string.status_need_permission)
-            PermissionHelper.requestScanPermissions(this)
+            showPermissionGateDialog(firstTime = false)
             return
         }
         if (!PermissionHelper.isOnWifi(this)) {

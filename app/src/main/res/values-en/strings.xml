@@ -141,4 +141,11 @@ Support: ahmedtitio@gmail.com</string>
     <string name="manual_ip_hint">IP address (e.g. 192.168.1.50)</string>
     <string name="manual_mac_hint">MAC address (e.g. AA:BB:CC:DD:EE:FF)</string>
     <string name="status_empty_diagnosis">No devices found. If you are sure devices are connected, open the router page at %1$s and add devices with the Add button — some routers hide the ARP table from apps.</string>
+    <string name="perm_gate_title">Permissions required</string>
+    <string name="perm_gate_message">This app works only after granting the following permissions:\n• Nearby devices (Wi-Fi): to see devices on your network\n• Notifications: to show scan status\nWithout them the app cannot list any device.</string>
+    <string name="perm_grant">Grant permissions</string>
+    <string name="perm_open_settings">Open app settings</string>
+    <string name="perm_denied_permanent">Permissions were permanently denied. Tap "Open app settings" and enable Nearby devices manually, then return to the app.</string>
+    <string name="perm_still_missing">Permissions are still missing — the app cannot work without them.</string>
+    <string name="exit_app">Exit app</string>
 </resources>

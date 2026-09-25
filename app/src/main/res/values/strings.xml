@@ -74,4 +74,11 @@
     <string name="manual_ip_hint">عنوان IP (مثال: 192.168.1.50)</string>
     <string name="manual_mac_hint">عنوان MAC (مثال: AA:BB:CC:DD:EE:FF)</string>
     <string name="status_empty_diagnosis">لم يتم العثور على أجهزة. إذا كنت متأكداً من وجود أجهزة متصلة فافتح صفحة الراوتر %1$s وأضف الأجهزة يدوياً من زر «إضافة» — بعض الراوترات تحجب جدول ARP عن التطبيقات.</string>
+    <string name="perm_gate_title">التطبيق يحتاج أذونات للعمل</string>
+    <string name="perm_gate_message">يعمل هذا التطبيق فقط بعد منح الأذونات التالية:\n• الأجهزة القريبة (Wi-Fi): لرؤية الأجهزة المتصلة بشبكتك\n• الإشعارات: لعرض حالة الفحص\nبدون هذه الأذونات لن يتمكن التطبيق من عرض أي جهاز.</string>
+    <string name="perm_grant">منح الأذونات</string>
+    <string name="perm_open_settings">فتح إعدادات التطبيق</string>
+    <string name="perm_denied_permanent">تم رفض الأذونات نهائياً. اضغط «فتح إعدادات التطبيق» وفعّل إذن الأجهزة القريبة يدوياً، ثم عد للتطبيق.</string>
+    <string name="perm_still_missing">لم تُمنح الأذونات بعد — التطبيق لا يمكنه العمل بدونها.</string>
+    <string name="exit_app">خروج من التطبيق</string>
 </resources>
